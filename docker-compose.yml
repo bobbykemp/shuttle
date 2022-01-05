@@ -1,0 +1,17 @@
+version: "2.1"
+
+services:
+  openssh-server:
+    image: lscr.io/linuxserver/openssh-server
+    container_name: ssh-server
+    hostname: ssh-server
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/Chicago
+      - SUDO_ACCESS=false
+      - PASSWORD_ACCESS=true
+      - USER_NAME=test
+      - USER_PASSWORD=test
+    ports:
+      - 2222:2222
