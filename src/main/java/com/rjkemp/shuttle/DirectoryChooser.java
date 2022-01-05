@@ -9,7 +9,7 @@ public class DirectoryChooser extends JPanel
         implements ActionListener {
 
     JButton go;
-    JLabel label;
+    JLabel label, closeLabel;
     JFileChooser chooser;
     String choosertitle = "Select a directory to watch for changes";
     File selection;
@@ -25,9 +25,11 @@ public class DirectoryChooser extends JPanel
     public DirectoryChooser() {
         go = new JButton("Select Watched Directory");
         label = new JLabel(getSelectedAbsPath());
+        closeLabel = new JLabel("Close this dialog to select the above directory");
         go.addActionListener(this);
         add(go);
         add(label);
+        add(closeLabel);
     }
 
     public void actionPerformed(ActionEvent e) {
@@ -49,6 +51,6 @@ public class DirectoryChooser extends JPanel
     }
 
     public Dimension getPreferredSize() {
-        return new Dimension(200, 200);
+        return new Dimension(400, 250);
     }
 }

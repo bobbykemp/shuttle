@@ -5,9 +5,19 @@ import java.awt.event.*;
 import java.net.URL;
 import javax.swing.*;
 import java.io.File;
+import java.io.IOException;
 
 public class App {
     static File watchedDirectory;
+    static MenuItem currentDirectory;
+
+    public static String getWatchedDirectory() {
+        if (watchedDirectory == null) {
+            return "No watched directory";
+        } else {
+            return String.format("Watching: %s", watchedDirectory.getAbsolutePath());
+        }
+    }
 
     public static void main(String[] args) {
         try {
@@ -46,9 +56,11 @@ public class App {
         // Create a popup menu components
         MenuItem pickFolder = new MenuItem("Select a folder");
         MenuItem exitItem = new MenuItem("Exit");
+        currentDirectory = new MenuItem(getWatchedDirectory());
 
         // Add components to popup menu
         popup.add(pickFolder);
+        popup.add(currentDirectory);
         popup.addSeparator();
         popup.add(exitItem);
 
@@ -87,14 +99,23 @@ public class App {
         final DirectoryChooser panel = new DirectoryChooser();
         frame.addWindowListener(
                 new WindowAdapter() {
+                    // used as callback for selection of a new directory to watch
                     public void windowClosing(WindowEvent e) {
                         watchedDirectory = panel.selection;
-                        System.out.println(watchedDirectory);
+                        currentDirectory.setLabel(getWatchedDirectory());
+                        System.out.println("Now watching directory:" + watchedDirectory);
+
+                        try {
+                            new DirectoryWatcher(watchedDirectory.toPath(), true).processEvents();
+                        } catch (IOException error) {
+                            error.printStackTrace();
+                        }
                     }
                 });
 
         frame.getContentPane().add(panel, "Center");
         frame.setSize(panel.getPreferredSize());
+        frame.setResizable(false);
         frame.setVisible(true);
     }
 
