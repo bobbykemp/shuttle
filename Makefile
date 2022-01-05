@@ -1,4 +1,7 @@
 clean:
+	mvn clean
+
+clean_examples:
 	rm examples/*.class
 
 compile:

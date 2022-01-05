@@ -4,14 +4,44 @@ import java.nio.file.*;
 import static java.nio.file.StandardWatchEventKinds.*;
 import static java.nio.file.LinkOption.*;
 import java.nio.file.attribute.*;
+import javax.swing.SwingWorker;
 import java.io.*;
+import java.awt.MenuItem;
 import java.util.*;
 
-public class DirectoryWatcher {
+public class DirectoryWatcher extends SwingWorker<Void, Path> {
     private final WatchService watcher;
     private final Map<WatchKey, Path> keys;
+    private List<Path> paths = new ArrayList<Path>();
     private final boolean recursive;
     private boolean trace = false;
+
+    private MenuItem statusLabel;
+
+    public static enum WatchStatus {
+        INACTIVE,
+        ACTIVE,
+        SCANNING,
+        READY,
+    }
+
+    private WatchStatus status;
+
+    private void setWatcherStatus(WatchStatus status) {
+        System.out.println(status.toString());
+        this.status = status;
+        if (this.statusLabel != null) {
+            this.statusLabel.setLabel(status.toString());
+        }
+    }
+
+    public WatchStatus getWatchStatus() {
+        return status;
+    }
+
+    public List<Path> getPaths() {
+        return this.paths;
+    }
 
     @SuppressWarnings("unchecked")
     static <T> WatchEvent<T> cast(WatchEvent<?> event) {
@@ -22,7 +52,7 @@ public class DirectoryWatcher {
      * Register the given directory with the WatchService
      */
     private void register(Path dir) throws IOException {
-        WatchKey key = dir.register(watcher, ENTRY_CREATE, ENTRY_DELETE, ENTRY_MODIFY);
+        WatchKey key = dir.register(watcher, ENTRY_CREATE, ENTRY_MODIFY);
         if (trace) {
             Path prev = keys.get(key);
             if (prev == null) {
@@ -55,18 +85,24 @@ public class DirectoryWatcher {
     /**
      * Creates a WatchService and registers the given directory
      */
-    DirectoryWatcher(Path dir, boolean recursive) throws IOException {
+    DirectoryWatcher(Path dir, boolean recursive, MenuItem statusLabel) throws IOException {
+        setWatcherStatus(WatchStatus.INACTIVE);
+
+        this.statusLabel = statusLabel;
         this.watcher = FileSystems.getDefault().newWatchService();
         this.keys = new HashMap<WatchKey, Path>();
         this.recursive = recursive;
 
         if (recursive) {
+            setWatcherStatus(WatchStatus.SCANNING);
             System.out.format("Scanning %s ...\n", dir);
             registerAll(dir);
             System.out.println("Done.");
         } else {
             register(dir);
         }
+
+        setWatcherStatus(WatchStatus.READY);
 
         // enable trace after initial registration
         this.trace = true;
@@ -75,15 +111,18 @@ public class DirectoryWatcher {
     /**
      * Process all events for keys queued to the watcher
      */
-    void processEvents() {
-        for (;;) {
+    @Override
+    protected Void doInBackground() {
+        setWatcherStatus(WatchStatus.ACTIVE);
 
+        while (!isCancelled()) {
             // wait for key to be signalled
             WatchKey key;
+
             try {
                 key = watcher.take();
             } catch (InterruptedException x) {
-                return;
+                return null;
             }
 
             Path dir = keys.get(key);
@@ -107,6 +146,7 @@ public class DirectoryWatcher {
 
                 // print out event
                 System.out.format("%s: %s\n", event.kind().name(), child);
+                publish(child);
 
                 // if directory is created, and watching recursively, then
                 // register it and its sub-directories
@@ -131,6 +171,22 @@ public class DirectoryWatcher {
                     break;
                 }
             }
+        }
+
+        System.out.println("Cancelled");
+
+        setWatcherStatus(WatchStatus.INACTIVE);
+
+        return null;
+    }
+
+    @Override
+    protected void process(List<Path> paths) {
+        for (int i = 0; i < paths.size(); i++) {
+            Path path = paths.get(i);
+            // System.out.format("Path %s\n", path);
+            this.paths.add(path);
+            paths.remove(i);
         }
     }
 
