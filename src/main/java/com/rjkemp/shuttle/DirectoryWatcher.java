@@ -77,6 +77,12 @@ public class DirectoryWatcher extends SwingWorker<Void, Path> {
             public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs)
                     throws IOException {
                 register(dir);
+                System.out.println(dir.toAbsolutePath().toString());
+                for (final File entry : dir.toFile().listFiles()) {
+                    if (entry.isFile()) {
+                        System.out.println(entry.getName());
+                    }
+                }
                 return FileVisitResult.CONTINUE;
             }
         });
@@ -122,6 +128,7 @@ public class DirectoryWatcher extends SwingWorker<Void, Path> {
             try {
                 key = watcher.take();
             } catch (InterruptedException x) {
+                setWatcherStatus(WatchStatus.INACTIVE);
                 return null;
             }
 
@@ -173,10 +180,6 @@ public class DirectoryWatcher extends SwingWorker<Void, Path> {
             }
         }
 
-        System.out.println("Cancelled");
-
-        setWatcherStatus(WatchStatus.INACTIVE);
-
         return null;
     }
 
@@ -194,23 +197,4 @@ public class DirectoryWatcher extends SwingWorker<Void, Path> {
         System.err.println("usage: java DirectoryWatcher [-r] dir");
         System.exit(-1);
     }
-
-    public static void main(String[] args) throws IOException {
-        // parse arguments
-        if (args.length == 0 || args.length > 2)
-            usage();
-        boolean recursive = false;
-        int dirArg = 0;
-        if (args[0].equals("-r")) {
-            if (args.length < 2)
-                usage();
-            recursive = true;
-            dirArg++;
-        }
-
-        // register directory and process its events
-        Path dir = Paths.get(args[dirArg]);
-        new DirectoryWatcher(dir, recursive).processEvents();
-    }
-
 }

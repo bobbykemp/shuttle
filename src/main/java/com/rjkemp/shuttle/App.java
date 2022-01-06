@@ -12,34 +12,38 @@ import java.nio.file.AccessDeniedException;
 
 public class App {
     static File watchedDirectory;
-    static MenuItem pickFolder, startMonitoring, exitItem, currentDirectory, watchStatus, stopMonitoring;
+    static MenuItem pickFolder, startMonitoring, exitItem, currentDirectory, watchStatus, selectedTransferType,
+            stopMonitoring;
+    static JRadioButtonMenuItem transferType;
     static JFrame frame;
     static DirectoryWatcher watcher;
-    static DirectoryWatcher.WatchStatus watchStatusMessage = DirectoryWatcher.WatchStatus.INACTIVE;
-
-    public static void setWatchStatusMessage(DirectoryWatcher.WatchStatus message) {
-        watchStatusMessage = message;
-    }
-
-    public static DirectoryWatcher.WatchStatus getWatchStatusMessage() {
-        return watchStatusMessage;
-    }
+    static TransferSettingsPage transferSettingsPage;
 
     public static String getWatchedDirectory() {
         if (watchedDirectory == null) {
             return "No watched directory";
         } else {
-            return String.format("Watching: %s", watchedDirectory.getAbsolutePath());
+            return String.format("Selected: %s", watchedDirectory.getAbsolutePath());
         }
     }
 
     public static void updateMenuButtons() {
+        // Start Monitoring button
         if (startMonitoring != null) {
+            // no watched directory to monitor
             if (watchedDirectory == null) {
-                // disable monitoring button if there is no watched directory
                 startMonitoring.setEnabled(false);
             } else {
                 startMonitoring.setEnabled(true);
+            }
+        }
+
+        if (stopMonitoring != null) {
+            // no watcher, so nothing to stop
+            if (watcher == null) {
+                stopMonitoring.setEnabled(false);
+            } else {
+                stopMonitoring.setEnabled(true);
             }
         }
     }
@@ -76,24 +80,29 @@ public class App {
         }
 
         final PopupMenu popup = new PopupMenu();
-        final TrayIcon trayIcon = new TrayIcon(createImage("/bitmap.gif", "tray icon"));
+        final TrayIcon trayIcon = new TrayIcon(createImage("/logo.png", "tray icon"));
         final SystemTray tray = SystemTray.getSystemTray();
 
-        // Create a popup menu components
-        pickFolder = new MenuItem("Select a folder");
-        startMonitoring = new MenuItem("Start monitoring");
-        stopMonitoring = new MenuItem("Stop monitoring");
-        exitItem = new MenuItem("Exit");
+        // Create popup menu components
+        pickFolder = new MenuItem("Pick Folder");
+        startMonitoring = new MenuItem("Start Shuttling");
+        stopMonitoring = new MenuItem("Stop Shuttling");
+        exitItem = new MenuItem("Stop Shuttle");
         currentDirectory = new MenuItem(getWatchedDirectory());
-        watchStatus = new MenuItem(getWatchStatusMessage().toString());
+        watchStatus = new MenuItem(DirectoryWatcher.WatchStatus.INACTIVE.toString());
+        selectedTransferType = new MenuItem(TransferSettingsPage.TRANSFER_TYPE.LOCAL.toString());
         currentDirectory.setEnabled(false);
         watchStatus.setEnabled(false);
+        selectedTransferType.setEnabled(false);
+
+        transferSettingsPage = new TransferSettingsPage(selectedTransferType);
 
         updateMenuButtons();
 
         // Add components to popup menu
         popup.add(watchStatus);
         popup.add(currentDirectory);
+        popup.add(selectedTransferType);
         popup.addSeparator();
         popup.add(pickFolder);
         popup.add(startMonitoring);
@@ -114,8 +123,7 @@ public class App {
         // double left click tray icon
         trayIcon.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                JOptionPane.showMessageDialog(null,
-                        "This dialog box is run from System Tray");
+                transferSettingsPage.createAndShowGUI();
             }
         });
 
@@ -141,12 +149,13 @@ public class App {
                     showErrorModal(String.format(error.getMessage()));
                     error.printStackTrace();
                 }
+                updateMenuButtons();
             }
         });
 
         stopMonitoring.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                watcher.cancel(false);
+                watcher.cancel(true);
             }
         });
 
@@ -178,7 +187,7 @@ public class App {
         JFileChooser chooser = new JFileChooser();
 
         chooser.setCurrentDirectory(new java.io.File(System.getProperty("user.home")));
-        chooser.setDialogTitle("Choose a folder");
+        chooser.setDialogTitle("Pick folder");
         chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 
         // disable the "All files" option.
