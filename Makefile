@@ -1,3 +1,6 @@
+package:
+	mvn package
+
 clean:
 	mvn clean
 
@@ -9,9 +12,6 @@ compile:
 
 test:
 	mvn test
-
-package:
-	mvn package
 
 run:
 	java -cp target/shuttle-1.0-SNAPSHOT.jar com.rjkemp.shuttle.App

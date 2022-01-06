@@ -76,7 +76,7 @@ public class App {
         }
 
         final PopupMenu popup = new PopupMenu();
-        final TrayIcon trayIcon = new TrayIcon(createImage("/bulb.gif", "tray icon"));
+        final TrayIcon trayIcon = new TrayIcon(createImage("/bitmap.gif", "tray icon"));
         final SystemTray tray = SystemTray.getSystemTray();
 
         // Create a popup menu components
