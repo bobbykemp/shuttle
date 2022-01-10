@@ -6,32 +6,23 @@ import java.net.URL;
 
 import javax.swing.*;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
 
 public class App {
-    static File watchedDirectory;
     static MenuItem pickFolder, startMonitoring, exitItem, currentDirectory, watchStatus, selectedTransferType,
             stopMonitoring;
     static JRadioButtonMenuItem transferType;
     static JFrame frame;
     static DirectoryWatcher watcher;
     static TransferSettingsPage transferSettingsPage;
-
-    public static String getWatchedDirectory() {
-        if (watchedDirectory == null) {
-            return "No watched directory";
-        } else {
-            return String.format("Selected: %s", watchedDirectory.getAbsolutePath());
-        }
-    }
+    static SelectFolderPopup selectFolderPopup;
 
     public static void updateMenuButtons() {
         // Start Monitoring button
         if (startMonitoring != null) {
             // no watched directory to monitor
-            if (watchedDirectory == null) {
+            if (selectFolderPopup.getWatchedDirectory() == null) {
                 startMonitoring.setEnabled(false);
             } else {
                 startMonitoring.setEnabled(true);
@@ -48,7 +39,7 @@ public class App {
         }
     }
 
-    private static void createAndShowTrayItem() {
+    private static void createAndShowGUI() {
         // Check the SystemTray support
         if (!SystemTray.isSupported()) {
             System.out.println("SystemTray is not supported");
@@ -64,14 +55,15 @@ public class App {
         startMonitoring = new MenuItem("Start Shuttling");
         stopMonitoring = new MenuItem("Stop Shuttling");
         exitItem = new MenuItem("Stop Shuttle");
-        currentDirectory = new MenuItem(getWatchedDirectory());
+        currentDirectory = new MenuItem("No watched directory");
         watchStatus = new MenuItem(DirectoryWatcher.WatchStatus.INACTIVE.toString());
         selectedTransferType = new MenuItem(TransferSettingsPage.TRANSFER_TYPE.LOCAL.toString());
         currentDirectory.setEnabled(false);
         watchStatus.setEnabled(false);
         selectedTransferType.setEnabled(false);
 
-        transferSettingsPage = new TransferSettingsPage();
+        transferSettingsPage = new TransferSettingsPage(selectedTransferType);
+        selectFolderPopup = new SelectFolderPopup(currentDirectory);
 
         updateMenuButtons();
 
@@ -99,14 +91,14 @@ public class App {
         // double left click tray icon
         trayIcon.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                transferSettingsPage.createAndShowGUI(selectedTransferType);
+                transferSettingsPage.createAndShowGUI();
             }
         });
 
         // click choose folder button
         pickFolder.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                createAndShowSelectFolderPopup();
+                selectFolderPopup.createAndShowGUI();
                 updateMenuButtons();
             }
         });
@@ -115,7 +107,8 @@ public class App {
         startMonitoring.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 try {
-                    (watcher = new DirectoryWatcher(watchedDirectory.toPath(), true, watchStatus)).execute();
+                    (watcher = new DirectoryWatcher(selectFolderPopup.getWatchedDirectory().toPath(), true,
+                            watchStatus)).execute();
                 } catch (AccessDeniedException error) {
                     // show an error dialog
                     showErrorModal(
@@ -154,33 +147,6 @@ public class App {
                 JOptionPane.ERROR_MESSAGE);
     }
 
-    private static void createAndShowSelectFolderPopup() {
-        frame = new JFrame();
-        frame.setResizable(false);
-
-        JPanel chooserPanel = new JPanel();
-        JFileChooser chooser = new JFileChooser();
-
-        chooser.setCurrentDirectory(new java.io.File(System.getProperty("user.home")));
-        chooser.setDialogTitle("Pick folder");
-        chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-
-        // disable the "All files" option.
-        chooser.setAcceptAllFileFilterUsed(false);
-
-        if (chooser.showOpenDialog(chooserPanel) == JFileChooser.APPROVE_OPTION) {
-            watchedDirectory = chooser.getSelectedFile();
-            System.out.println("Selected directory: " + watchedDirectory);
-            currentDirectory.setLabel(getWatchedDirectory());
-        } else {
-            watchedDirectory = null;
-            System.out.println("No directory selected");
-        }
-
-        frame.getContentPane().add(chooserPanel, "Center");
-        frame.setSize(chooserPanel.getPreferredSize());
-    }
-
     // Obtain the image URL
     protected static Image createImage(String path, String description) {
         URL imageURL = App.class.getResource(path);
@@ -217,7 +183,7 @@ public class App {
         // adding TrayIcon.
         SwingUtilities.invokeLater(new Runnable() {
             public void run() {
-                createAndShowTrayItem();
+                createAndShowGUI();
             }
         });
     }
