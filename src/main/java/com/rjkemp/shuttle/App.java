@@ -48,30 +48,6 @@ public class App {
         }
     }
 
-    public static void main(String[] args) {
-        try {
-            UIManager.setLookAndFeel("com.sun.java.swing.plaf.windows.WindowsLookAndFeel");
-            // UIManager.setLookAndFeel("javax.swing.plaf.metal.MetalLookAndFeel");
-        } catch (UnsupportedLookAndFeelException ex) {
-            ex.printStackTrace();
-        } catch (IllegalAccessException ex) {
-            ex.printStackTrace();
-        } catch (InstantiationException ex) {
-            ex.printStackTrace();
-        } catch (ClassNotFoundException ex) {
-            ex.printStackTrace();
-        }
-        /* Turn off metal's use of bold fonts */
-        UIManager.put("swing.boldMetal", Boolean.FALSE);
-        // Schedule a job for the event-dispatching thread:
-        // adding TrayIcon.
-        SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-                createAndShowTrayItem();
-            }
-        });
-    }
-
     private static void createAndShowTrayItem() {
         // Check the SystemTray support
         if (!SystemTray.isSupported()) {
@@ -95,7 +71,7 @@ public class App {
         watchStatus.setEnabled(false);
         selectedTransferType.setEnabled(false);
 
-        transferSettingsPage = new TransferSettingsPage(selectedTransferType);
+        transferSettingsPage = new TransferSettingsPage();
 
         updateMenuButtons();
 
@@ -123,7 +99,7 @@ public class App {
         // double left click tray icon
         trayIcon.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                transferSettingsPage.createAndShowGUI();
+                transferSettingsPage.createAndShowGUI(selectedTransferType);
             }
         });
 
@@ -176,7 +152,6 @@ public class App {
                 "Error",
                 JOptionPane.DEFAULT_OPTION,
                 JOptionPane.ERROR_MESSAGE);
-
     }
 
     private static void createAndShowSelectFolderPopup() {
@@ -216,5 +191,34 @@ public class App {
         } else {
             return (new ImageIcon(imageURL, description)).getImage();
         }
+    }
+
+    private static void initLookAndFeel() {
+        try {
+            UIManager.setLookAndFeel("com.sun.java.swing.plaf.windows.WindowsLookAndFeel");
+            // UIManager.setLookAndFeel("javax.swing.plaf.metal.MetalLookAndFeel");
+        } catch (UnsupportedLookAndFeelException ex) {
+            ex.printStackTrace();
+        } catch (IllegalAccessException ex) {
+            ex.printStackTrace();
+        } catch (InstantiationException ex) {
+            ex.printStackTrace();
+        } catch (ClassNotFoundException ex) {
+            ex.printStackTrace();
+        }
+        /* Turn off metal's use of bold fonts */
+        UIManager.put("swing.boldMetal", Boolean.FALSE);
+    }
+
+    public static void main(String[] args) {
+        initLookAndFeel();
+
+        // Schedule a job for the event-dispatching thread:
+        // adding TrayIcon.
+        SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+                createAndShowTrayItem();
+            }
+        });
     }
 }

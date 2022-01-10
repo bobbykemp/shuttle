@@ -15,10 +15,8 @@ public class TransferSettingsPage extends JPanel
         REMOTE,
     }
 
-    public TransferSettingsPage(MenuItem selectedTransferType) {
+    public TransferSettingsPage() {
         super(new BorderLayout());
-
-        this.selectedTransferType = selectedTransferType;
 
         // Create the radio buttons.
         JRadioButton localTransferButton = new JRadioButton("Local Transfer");
@@ -27,19 +25,22 @@ public class TransferSettingsPage extends JPanel
         localTransferButton.setSelected(true);
 
         JRadioButton remoteTransferButton = new JRadioButton("Remote Transfer");
-        localTransferButton.setActionCommand(TRANSFER_TYPE.REMOTE.toString());
+        remoteTransferButton.setActionCommand(TRANSFER_TYPE.REMOTE.toString());
         remoteTransferButton.setMnemonic(KeyEvent.VK_R);
 
         // Group the radio buttons.
         ButtonGroup group = new ButtonGroup();
         group.add(localTransferButton);
+        group.add(remoteTransferButton);
 
         // Register a listener for the radio buttons.
         localTransferButton.addActionListener(this);
+        remoteTransferButton.addActionListener(this);
 
         // Put the radio buttons in a column in a panel.
         JPanel radioPanel = new JPanel(new GridLayout(0, 1));
         radioPanel.add(localTransferButton);
+        radioPanel.add(remoteTransferButton);
 
         add(radioPanel, BorderLayout.LINE_START);
         setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
@@ -55,10 +56,12 @@ public class TransferSettingsPage extends JPanel
      * this method should be invoked from the
      * event-dispatching thread.
      */
-    public void createAndShowGUI() {
+    public void createAndShowGUI(MenuItem selectedTransferType) {
         // Create and set up the window.
         JFrame frame = new JFrame("Transfer settings");
         frame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+
+        this.selectedTransferType = selectedTransferType;
 
         // Create and set up the content pane.
         JComponent newContentPane = new TransferSettingsPage();
