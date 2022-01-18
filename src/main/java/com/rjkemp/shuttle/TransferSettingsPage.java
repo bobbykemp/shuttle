@@ -12,6 +12,8 @@ public class TransferSettingsPage extends JPanel
 
     MenuItem selectedTransferType;
     SelectFolderPopup selectFolderPopup;
+    LocalTransfer localTransferPanel;
+    RemoteTransfer remoteTransferPanel;
 
     public static enum TRANSFER_TYPE {
         LOCAL,
@@ -20,13 +22,28 @@ public class TransferSettingsPage extends JPanel
 
     public TransferSettingsPage(MenuItem selectedTransferType) {
         super(new BorderLayout());
-
         this.selectedTransferType = selectedTransferType;
+
+        selectFolderPopup = new SelectFolderPopup();
+        localTransferPanel = new LocalTransfer();
+        remoteTransferPanel = new RemoteTransfer();
+
     }
 
     /** Listens to the radio buttons. */
     public void actionPerformed(ActionEvent e) {
         selectedTransferType.setLabel(e.getActionCommand());
+        remoteTransferPanel.setVisible(false);
+        localTransferPanel.setVisible(false);
+
+        switch (e.getActionCommand()) {
+            case "REMOTE":
+                remoteTransferPanel.setVisible(true);
+                break;
+            case "LOCAL":
+                localTransferPanel.setVisible(true);
+                break;
+        }
     }
 
     /**
@@ -38,14 +55,10 @@ public class TransferSettingsPage extends JPanel
         JFrame frame = new JFrame("Transfer settings");
         frame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
 
-        selectFolderPopup = new SelectFolderPopup();
-
-        JTextPane textPane = new JTextPane();
-
         // Create the radio buttons.
         JRadioButton localTransferButton = new JRadioButton("Local Transfer");
-        localTransferButton.setMnemonic(KeyEvent.VK_L);
         localTransferButton.setActionCommand(TRANSFER_TYPE.LOCAL.toString());
+        localTransferButton.setMnemonic(KeyEvent.VK_L);
         localTransferButton.setSelected(true);
 
         JRadioButton remoteTransferButton = new JRadioButton("Remote Transfer");
@@ -65,10 +78,12 @@ public class TransferSettingsPage extends JPanel
         JPanel radioPanel = new JPanel(new GridLayout(0, 1));
         radioPanel.add(localTransferButton);
         radioPanel.add(remoteTransferButton);
-        radioPanel.add(textPane);
 
-        add(radioPanel, BorderLayout.LINE_START);
-        setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        add(radioPanel, BorderLayout.WEST);
+        add(localTransferPanel, BorderLayout.EAST);
+        add(remoteTransferPanel, BorderLayout.EAST);
+
+        setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
         frame.getContentPane().add(this);
         frame.setSize(new DimensionUIResource(500, 250));
