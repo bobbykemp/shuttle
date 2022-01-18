@@ -16,6 +16,7 @@ public class App {
     static JFrame frame;
     static DirectoryWatcher watcher;
     static TransferSettingsPage transferSettingsPage;
+    static MainPage mainPage;
     static SelectFolderPopup selectFolderPopup;
 
     public static void updateMenuButtons() {
@@ -64,6 +65,7 @@ public class App {
 
         transferSettingsPage = new TransferSettingsPage(selectedTransferType);
         selectFolderPopup = new SelectFolderPopup(currentDirectory);
+        mainPage = new MainPage();
 
         updateMenuButtons();
 
@@ -91,7 +93,7 @@ public class App {
         // double left click tray icon
         trayIcon.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                transferSettingsPage.createAndShowGUI();
+                mainPage.createAndShowGUI();
             }
         });
 
