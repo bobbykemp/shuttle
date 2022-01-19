@@ -8,6 +8,7 @@ import java.io.File;
 public class SelectFolderPopup extends JPanel {
     private File watchedDirectory;
     private MenuItem currentDirectory;
+    private String noDirectoryLabel, selectedDirectoryLabel;
 
     public File getWatchedDirectory() {
         return this.watchedDirectory;
@@ -15,21 +16,24 @@ public class SelectFolderPopup extends JPanel {
 
     public String getWatchedDirectoryString() {
         if (watchedDirectory == null) {
-            return "No watched directory";
+            return this.noDirectoryLabel;
         } else {
-            return String.format("Selected: %s", watchedDirectory.getAbsolutePath());
+            return String.format(this.selectedDirectoryLabel, watchedDirectory.getAbsolutePath());
         }
     }
 
     // used when we want to set the label on a menu item from the parent
-    public SelectFolderPopup(MenuItem currentDirectory) {
+    public SelectFolderPopup(MenuItem currentDirectory, String noDirectoryLabel, String selectedDirectoryLabel) {
         super(new BorderLayout());
-
         this.currentDirectory = currentDirectory;
+        this.noDirectoryLabel = noDirectoryLabel;
+        this.selectedDirectoryLabel = selectedDirectoryLabel;
     }
 
-    public SelectFolderPopup() {
+    public SelectFolderPopup(String noDirectoryLabel, String selectedDirectoryLabel) {
         super(new BorderLayout());
+        this.noDirectoryLabel = noDirectoryLabel;
+        this.selectedDirectoryLabel = selectedDirectoryLabel;
     }
 
     public void createAndShowGUI() {

@@ -24,7 +24,7 @@ public class TransferSettingsPage extends JPanel
         super(new BorderLayout());
         this.selectedTransferType = selectedTransferType;
 
-        selectFolderPopup = new SelectFolderPopup();
+        // selectFolderPopup = new SelectFolderPopup();
         localTransferPanel = new LocalTransfer();
         remoteTransferPanel = new RemoteTransfer();
 

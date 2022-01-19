@@ -11,19 +11,19 @@ import java.nio.file.AccessDeniedException;
 
 public class App {
     static MenuItem pickFolder, startMonitoring, exitItem, currentDirectory, watchStatus, selectedTransferType,
-            stopMonitoring;
+            stopMonitoring, destinationDirectory;
     static JRadioButtonMenuItem transferType;
     static JFrame frame;
     static DirectoryWatcher watcher;
     static TransferSettingsPage transferSettingsPage;
     static MainPage mainPage;
-    static SelectFolderPopup selectFolderPopup;
+    static SelectFolderPopup selectFolderPopupSource, selectFolderPopupDestination;
 
     public static void updateMenuButtons() {
         // Start Monitoring button
         if (startMonitoring != null) {
             // no watched directory to monitor
-            if (selectFolderPopup.getWatchedDirectory() == null) {
+            if (selectFolderPopupSource.getWatchedDirectory() == null) {
                 startMonitoring.setEnabled(false);
             } else {
                 startMonitoring.setEnabled(true);
@@ -52,19 +52,28 @@ public class App {
         final SystemTray tray = SystemTray.getSystemTray();
 
         // Create popup menu components
-        pickFolder = new MenuItem("Pick Folder");
+        pickFolder = new MenuItem("Pick Source");
         startMonitoring = new MenuItem("Start Shuttling");
         stopMonitoring = new MenuItem("Stop Shuttling");
         exitItem = new MenuItem("Stop Shuttle");
-        currentDirectory = new MenuItem("No watched directory");
+        currentDirectory = new MenuItem("No source directory");
+        destinationDirectory = new MenuItem("No destination directory");
         watchStatus = new MenuItem(DirectoryWatcher.WatchStatus.INACTIVE.toString());
         selectedTransferType = new MenuItem(TransferSettingsPage.TRANSFER_TYPE.LOCAL.toString());
         currentDirectory.setEnabled(false);
+        destinationDirectory.setEnabled(false);
         watchStatus.setEnabled(false);
         selectedTransferType.setEnabled(false);
 
+        Menu destinationTypeMenu = new Menu("Pick Destination");
+        MenuItem destinationTypeLocal = new MenuItem("Local");
+        MenuItem destinationTypeRemote = new MenuItem("Remote");
+
         transferSettingsPage = new TransferSettingsPage(selectedTransferType);
-        selectFolderPopup = new SelectFolderPopup(currentDirectory);
+        selectFolderPopupSource = new SelectFolderPopup(currentDirectory, "No source directory",
+                "Source directory: %s");
+        selectFolderPopupDestination = new SelectFolderPopup(destinationDirectory, "No destination directory",
+                "Destination directory: %s");
         mainPage = new MainPage();
 
         updateMenuButtons();
@@ -72,12 +81,19 @@ public class App {
         // Add components to popup menu
         popup.add(watchStatus);
         popup.add(currentDirectory);
+        popup.add(destinationDirectory);
         popup.add(selectedTransferType);
         popup.addSeparator();
         popup.add(pickFolder);
+        popup.add(destinationTypeMenu);
+        popup.addSeparator();
         popup.add(startMonitoring);
         popup.add(stopMonitoring);
         popup.addSeparator();
+
+        destinationTypeMenu.add(destinationTypeLocal);
+        destinationTypeMenu.add(destinationTypeRemote);
+
         popup.add(exitItem);
 
         trayIcon.setPopupMenu(popup);
@@ -100,7 +116,7 @@ public class App {
         // click choose folder button
         pickFolder.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                selectFolderPopup.createAndShowGUI();
+                selectFolderPopupSource.createAndShowGUI();
                 updateMenuButtons();
             }
         });
@@ -109,7 +125,7 @@ public class App {
         startMonitoring.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 try {
-                    (watcher = new DirectoryWatcher(selectFolderPopup.getWatchedDirectory().toPath(), true,
+                    (watcher = new DirectoryWatcher(selectFolderPopupSource.getWatchedDirectory().toPath(), true,
                             watchStatus)).execute();
                 } catch (AccessDeniedException error) {
                     // show an error dialog
@@ -129,6 +145,23 @@ public class App {
                 watcher.cancel(true);
             }
         });
+
+        ActionListener listener = new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                MenuItem item = (MenuItem) e.getSource();
+                // TrayIcon.MessageType type = null;
+                System.out.println(item.getLabel());
+                if ("Local".equals(item.getLabel())) {
+                    selectFolderPopupDestination.createAndShowGUI();
+                    updateMenuButtons();
+                } else if ("Remote".equals(item.getLabel())) {
+
+                }
+            }
+        };
+
+        destinationTypeLocal.addActionListener(listener);
+        destinationTypeRemote.addActionListener(listener);
 
         // click exit button
         exitItem.addActionListener(new ActionListener() {
