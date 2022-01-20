@@ -125,7 +125,8 @@ public class App {
         startMonitoring.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 try {
-                    (watcher = new DirectoryWatcher(selectFolderPopupSource.getWatchedDirectory().toPath(), true,
+                    (watcher = new DirectoryWatcher(selectFolderPopupSource.getWatchedDirectory().toPath(),
+                            selectFolderPopupDestination.getWatchedDirectory().toPath(), true,
                             watchStatus)).execute();
                 } catch (AccessDeniedException error) {
                     // show an error dialog

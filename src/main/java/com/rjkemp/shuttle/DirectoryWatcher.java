@@ -2,6 +2,7 @@ package com.rjkemp.shuttle;
 
 import java.nio.file.*;
 import static java.nio.file.StandardWatchEventKinds.*;
+import static java.nio.file.StandardCopyOption.*;
 import static java.nio.file.LinkOption.*;
 import java.nio.file.attribute.*;
 import javax.swing.SwingWorker;
@@ -13,6 +14,7 @@ public class DirectoryWatcher extends SwingWorker<Void, Path> {
     private final WatchService watcher;
     private final Map<WatchKey, Path> keys;
     private List<Path> paths = new ArrayList<Path>();
+    private final Path destDir;
     private final boolean recursive;
     private boolean trace = false;
 
@@ -88,12 +90,37 @@ public class DirectoryWatcher extends SwingWorker<Void, Path> {
         });
     }
 
+    DirectoryWatcher(Path sourceDir, Path destDir, boolean recursive, MenuItem statusLabel) throws IOException {
+        setWatcherStatus(WatchStatus.INACTIVE);
+
+        this.destDir = destDir;
+        this.statusLabel = statusLabel;
+        this.watcher = FileSystems.getDefault().newWatchService();
+        this.keys = new HashMap<WatchKey, Path>();
+        this.recursive = recursive;
+
+        if (recursive) {
+            setWatcherStatus(WatchStatus.SCANNING);
+            System.out.format("Scanning %s ...\n", sourceDir);
+            registerAll(sourceDir);
+            System.out.println("Done.");
+        } else {
+            register(sourceDir);
+        }
+
+        setWatcherStatus(WatchStatus.READY);
+
+        // enable trace after initial registration
+        this.trace = true;
+    }
+
     /**
      * Creates a WatchService and registers the given directory
      */
     DirectoryWatcher(Path dir, boolean recursive, MenuItem statusLabel) throws IOException {
         setWatcherStatus(WatchStatus.INACTIVE);
 
+        this.destDir = null;
         this.statusLabel = statusLabel;
         this.watcher = FileSystems.getDefault().newWatchService();
         this.keys = new HashMap<WatchKey, Path>();
@@ -187,14 +214,16 @@ public class DirectoryWatcher extends SwingWorker<Void, Path> {
     protected void process(List<Path> paths) {
         for (int i = 0; i < paths.size(); i++) {
             Path path = paths.get(i);
-            // System.out.format("Path %s\n", path);
+            if (this.destDir != null) {
+                try {
+                    Files.move(path, Paths.get(destDir.toString(), path.getFileName().toString()), REPLACE_EXISTING,
+                            ATOMIC_MOVE);
+                } catch (IOException exception) {
+                    exception.printStackTrace();
+                }
+            }
             this.paths.add(path);
             paths.remove(i);
         }
-    }
-
-    static void usage() {
-        System.err.println("usage: java DirectoryWatcher [-r] dir");
-        System.exit(-1);
     }
 }
