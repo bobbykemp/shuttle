@@ -17,6 +17,7 @@ public class DirectoryWatcher extends SwingWorker<Void, Path> {
     private final Path destDir;
     private final boolean recursive;
     private boolean trace = false;
+    private PathManager pathManager = new PathManager();
 
     private MenuItem statusLabel;
 
@@ -170,6 +171,7 @@ public class DirectoryWatcher extends SwingWorker<Void, Path> {
 
                 // TBD - provide example of how OVERFLOW event is handled
                 if (kind == OVERFLOW) {
+                    System.out.println("OVERFLOW");
                     continue;
                 }
 
@@ -212,18 +214,10 @@ public class DirectoryWatcher extends SwingWorker<Void, Path> {
 
     @Override
     protected void process(List<Path> paths) {
-        for (int i = 0; i < paths.size(); i++) {
-            Path path = paths.get(i);
-            if (this.destDir != null) {
-                try {
-                    Files.move(path, Paths.get(destDir.toString(), path.getFileName().toString()), REPLACE_EXISTING,
-                            ATOMIC_MOVE);
-                } catch (IOException exception) {
-                    exception.printStackTrace();
-                }
-            }
-            this.paths.add(path);
-            paths.remove(i);
+        try {
+            pathManager.processBatch(paths, destDir);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
     }
 }
