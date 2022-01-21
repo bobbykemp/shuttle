@@ -1,11 +1,12 @@
 package com.rjkemp.shuttle;
 
 import java.awt.*;
+import java.awt.Window.Type;
 import java.awt.event.*;
 import java.net.URL;
-
 import javax.swing.*;
-
+import javax.swing.event.MouseInputAdapter;
+import org.w3c.dom.events.MouseEvent;
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
 
@@ -14,6 +15,7 @@ public class App {
             stopMonitoring, destinationDirectory;
     static JRadioButtonMenuItem transferType;
     static JFrame frame;
+    static final JFrame masterFrame = new JFrame();
     static DirectoryWatcher watcher;
     static TransferSettingsPage transferSettingsPage;
     static MainPage mainPage;
@@ -41,6 +43,9 @@ public class App {
     }
 
     private static void createAndShowGUI() {
+        masterFrame.setUndecorated(true);
+        masterFrame.setType(Type.UTILITY);
+
         // Check the SystemTray support
         if (!SystemTray.isSupported()) {
             System.out.println("SystemTray is not supported");
@@ -98,6 +103,16 @@ public class App {
 
         trayIcon.setPopupMenu(popup);
 
+        trayIcon.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (e.getButton() == MouseEvent.BUTTON1) {
+                    frame.add(popup);
+                    popup.show(frame, e.getScreenX(), e.getScreenY());
+                }
+            }
+        });
+
         // add icon to tray
         try {
             tray.add(trayIcon);
@@ -108,6 +123,7 @@ public class App {
 
         // double left click tray icon
         trayIcon.addActionListener(new ActionListener() {
+
             public void actionPerformed(ActionEvent e) {
                 mainPage.createAndShowGUI();
             }

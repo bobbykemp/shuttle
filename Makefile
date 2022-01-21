@@ -7,6 +7,13 @@ clean:
 clean_examples:
 	rm examples/*.class
 
+test_files:
+	./testing/make_test_files.sh
+
+clean_test_files:
+	rm testing/source/*.dat
+	rm testing/destination/*.dat
+
 compile:
 	mvn compile
 

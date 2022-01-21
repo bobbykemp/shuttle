@@ -1,2 +1,6 @@
 .vscode/settings.json
 target/
+util/*.dat
+testing/source/*
+testing/destination/*
+.DS_Store
