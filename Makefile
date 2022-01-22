@@ -11,8 +11,8 @@ test_files:
 	./testing/make_test_files.sh
 
 clean_test_files:
-	rm testing/source/*.dat
-	rm testing/destination/*.dat
+	rm -f testing/source/*.dat
+	rm -f testing/destination/*.dat
 
 compile:
 	mvn compile

@@ -170,11 +170,11 @@ public class App {
                             watchStatus)).execute();
                 } catch (AccessDeniedException error) {
                     // show an error dialog
-                    showErrorModal(
+                    ErrorModal.show(
                             String.format("Access denied for folder %s\nFailed to start watching selected directory.",
                                     error.getMessage()));
                 } catch (IOException error) {
-                    showErrorModal(String.format(error.getMessage()));
+                    ErrorModal.show(String.format(error.getMessage()));
                     error.printStackTrace();
                 }
                 updateMenuButtons();
@@ -211,14 +211,6 @@ public class App {
                 System.exit(0);
             }
         });
-    }
-
-    private static void showErrorModal(String errorMessage) {
-        JOptionPane.showConfirmDialog(null,
-                errorMessage,
-                "Error",
-                JOptionPane.DEFAULT_OPTION,
-                JOptionPane.ERROR_MESSAGE);
     }
 
     // Obtain the image URL

@@ -36,6 +36,25 @@ public class SelectFolderPopup extends JPanel {
         this.selectedDirectoryLabel = selectedDirectoryLabel;
     }
 
+    private void showChooser(JFileChooser chooser) {
+        if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+            watchedDirectory = chooser.getSelectedFile();
+
+            if (watchedDirectory.exists()) {
+                System.out.println("Selected directory: " + watchedDirectory);
+                if (currentDirectory != null) {
+                    currentDirectory.setLabel(getWatchedDirectoryString());
+                }
+            } else {
+                ErrorModal.show("Directory does not exist");
+                showChooser(chooser);
+            }
+
+        } else {
+            System.out.println("No directory selected");
+        }
+    }
+
     public void createAndShowGUI() {
         JFrame frame = new JFrame("Select a folder");
         frame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
@@ -53,15 +72,7 @@ public class SelectFolderPopup extends JPanel {
         // disable the "All files" option.
         chooser.setAcceptAllFileFilterUsed(false);
 
-        if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
-            watchedDirectory = chooser.getSelectedFile();
-            System.out.println("Selected directory: " + watchedDirectory);
-            if (currentDirectory != null) {
-                currentDirectory.setLabel(getWatchedDirectoryString());
-            }
-        } else {
-            System.out.println("No directory selected");
-        }
+        showChooser(chooser);
 
         frame.getContentPane().add(this, "Center");
         frame.setSize(this.getPreferredSize());

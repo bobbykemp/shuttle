@@ -17,6 +17,7 @@ public class PathManager {
 
     private static class TaskRunner implements Runnable {
         private List<Path> pathsBatch = new ArrayList<Path>();
+        private List<Path> successfullyMoved = new ArrayList<Path>();
         private Path destDir;
 
         public TaskRunner(List<Path> pathsBatch, Path destDir) {
@@ -29,23 +30,26 @@ public class PathManager {
             System.out.format("Processing batch: %s %s %n", threadName,
                     pathsBatch);
 
-            for (int i = 0; i < pathsBatch.size(); i++) {
-                // the full path of the changed file e.g. C:\directory\file.extension
-                Path path = pathsBatch.get(i);
+            for (Path path : pathsBatch) {
                 Path destPath = Paths.get(destDir.toString(), path.getFileName().toString());
                 try {
                     Thread.sleep(50);
-                    System.out.format("Moving file %s", path);
+                    System.out.format("Moving file: %s %n", path);
                     Files.move(path, destPath, REPLACE_EXISTING, ATOMIC_MOVE);
-                    pathsBatch.remove(i);
-                } catch (InterruptedException e) {
+                    successfullyMoved.add(path);
+                } catch (InterruptedException exception) {
                     threadMessage("Thread interrupted");
+                } catch (NoSuchFileException exception) {
+                    threadMessage("no such file");
                 } catch (IOException exception) {
-                    threadMessage(exception.getStackTrace().toString());
+                    exception.printStackTrace();
                 } catch (Exception exception) {
                     System.out.format("Could not move path: %s", destPath);
                 }
             }
+
+            // remove all paths that were moved successfully
+            pathsBatch.removeAll(successfullyMoved);
         }
     }
 

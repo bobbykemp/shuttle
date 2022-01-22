@@ -23,5 +23,5 @@ esac
 
 for fileSize in "${testFileSizes[@]}"
 do
-	dd if=/dev/random of=testing/source/output-$fileSize.dat bs=$fileSize count=1
+	dd if=/dev/zero of=testing/source/$(uuidgen)-$fileSize.dat bs=$fileSize count=1
 done
