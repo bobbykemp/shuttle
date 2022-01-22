@@ -81,10 +81,17 @@ public class DirectoryWatcher extends SwingWorker<Void, Path> {
                     throws IOException {
                 register(dir);
                 System.out.println(dir.toAbsolutePath().toString());
+                List<Path> files = new ArrayList<Path>();
                 for (final File entry : dir.toFile().listFiles()) {
                     if (entry.isFile()) {
                         System.out.println(entry.getName());
+                        files.add(entry.toPath());
                     }
+                }
+                try {
+                    pathManager.processBatch(files, destDir);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
                 }
                 return FileVisitResult.CONTINUE;
             }
