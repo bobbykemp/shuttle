@@ -1,4 +1,6 @@
+#!/bin/bash
 # Are we on Linux? Mac? Cygwin? Something else?
+
 unameOut="$(uname -s)"
 case "${unameOut}" in
     Linux*)     machine=Linux;;
@@ -10,8 +12,12 @@ esac
 
 case "${machine}" in
     # Mac is weird - need to use lowercase letters for file sizes
-    Mac*)        testFileSizes=( 100m 200m 400m 800m 1600m );;
-    *)           testFileSizes=( 100M 200M 400M 800M 1600M )
+    Mac*)
+        testFileSizes=(100m 200m 400m 800m 1600m)
+        ;;
+    *)
+        testFileSizes=(100M 200M 400M 800M 1600M)
+        ;;
 esac
 
 

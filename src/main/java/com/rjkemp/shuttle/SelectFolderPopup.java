@@ -42,7 +42,11 @@ public class SelectFolderPopup extends JPanel {
 
         JFileChooser chooser = new JFileChooser();
 
-        chooser.setCurrentDirectory(new java.io.File(System.getProperty("user.home")));
+        if (watchedDirectory != null) {
+            chooser.setCurrentDirectory(watchedDirectory);
+        } else {
+            chooser.setCurrentDirectory(new java.io.File(System.getProperty("user.home")));
+        }
         chooser.setDialogTitle("Pick folder");
         chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 

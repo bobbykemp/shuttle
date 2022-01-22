@@ -3,10 +3,9 @@ package com.rjkemp.shuttle;
 import java.awt.*;
 import java.awt.Window.Type;
 import java.awt.event.*;
+import java.awt.event.MouseEvent;
 import java.net.URL;
 import javax.swing.*;
-import javax.swing.event.MouseInputAdapter;
-import org.w3c.dom.events.MouseEvent;
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
 
@@ -14,7 +13,6 @@ public class App {
     static MenuItem pickFolder, startMonitoring, exitItem, currentDirectory, watchStatus, selectedTransferType,
             stopMonitoring, destinationDirectory;
     static JRadioButtonMenuItem transferType;
-    static JFrame frame;
     static final JFrame masterFrame = new JFrame();
     static DirectoryWatcher watcher;
     static TransferSettingsPage transferSettingsPage;
@@ -45,6 +43,7 @@ public class App {
     private static void createAndShowGUI() {
         masterFrame.setUndecorated(true);
         masterFrame.setType(Type.UTILITY);
+        masterFrame.setVisible(true);
 
         // Check the SystemTray support
         if (!SystemTray.isSupported()) {
@@ -103,13 +102,38 @@ public class App {
 
         trayIcon.setPopupMenu(popup);
 
-        trayIcon.addMouseListener(new MouseAdapter() {
+        trayIcon.addMouseListener(new MouseListener() {
             @Override
             public void mouseClicked(MouseEvent e) {
                 if (e.getButton() == MouseEvent.BUTTON1) {
-                    frame.add(popup);
-                    popup.show(frame, e.getScreenX(), e.getScreenY());
+                    masterFrame.add(popup);
+                    popup.show(masterFrame, e.getX(), e.getY());
                 }
+
+            }
+
+            @Override
+            public void mousePressed(MouseEvent e) {
+                // TODO Auto-generated method stub
+
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                // TODO Auto-generated method stub
+
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                // TODO Auto-generated method stub
+
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                // TODO Auto-generated method stub
+
             }
         });
 
@@ -190,8 +214,6 @@ public class App {
     }
 
     private static void showErrorModal(String errorMessage) {
-        frame = new JFrame();
-
         JOptionPane.showConfirmDialog(null,
                 errorMessage,
                 "Error",
