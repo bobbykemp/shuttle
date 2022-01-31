@@ -81,9 +81,12 @@ public class App {
         watchStatus.setEnabled(false);
         selectedTransferType.setEnabled(false);
 
+        ButtonGroup destinationButtonGroup = new ButtonGroup();
         Menu destinationTypeMenu = new Menu("Pick Destination");
-        MenuItem destinationTypeLocal = new MenuItem("Local");
-        MenuItem destinationTypeRemote = new MenuItem("Remote");
+        JRadioButtonMenuItem destinationTypeLocal = new JRadioButtonMenuItem("Local");
+        destinationButtonGroup.add(destinationTypeLocal);
+        JRadioButtonMenuItem destinationTypeRemote = new JRadioButtonMenuItem("Remote");
+        destinationButtonGroup.add(destinationTypeRemote);
 
         transferSettingsPage = new TransferSettingsPage(selectedTransferType);
         selectFolderPopupSource = new SelectFolderPopup(currentDirectory, "No source directory",

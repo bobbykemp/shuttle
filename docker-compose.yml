@@ -15,3 +15,12 @@ services:
       - USER_PASSWORD=test
     ports:
       - 2222:2222
+
+  samba-server:
+    image: dperson/samba
+    container_name: samba-server
+    hostname: smb-server
+    command: -s "public;/share;yes;no;yes;all;none;all;test" -u "test;test"
+    ports:
+      - 139:139
+      - 445:445

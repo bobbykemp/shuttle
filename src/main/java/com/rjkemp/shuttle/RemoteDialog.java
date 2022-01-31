@@ -48,7 +48,7 @@ public class RemoteDialog extends JPanel {
 		frequentPanel.setBorder(padding);
 
 		JTabbedPane tabbedPane = new JTabbedPane();
-		tabbedPane.addTab("Simple Modal Dialogs", null,
+		tabbedPane.addTab("SFTP", null,
 				frequentPanel,
 				simpleDialogDesc); // tooltip text
 
