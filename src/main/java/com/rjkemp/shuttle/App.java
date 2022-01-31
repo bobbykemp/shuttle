@@ -14,10 +14,12 @@ public class App {
             stopMonitoring, destinationDirectory;
     static JRadioButtonMenuItem transferType;
     static final JFrame masterFrame = new JFrame();
+    static final JFrame destinationRemoteDialogFrame = new JFrame();
     static DirectoryWatcher watcher;
     static TransferSettingsPage transferSettingsPage;
     static MainPage mainPage;
     static SelectFolderPopup selectFolderPopupSource, selectFolderPopupDestination;
+    static RemoteDialog destinationRemoteDialog;
 
     public static void updateMenuButtons() {
         // Start Monitoring button
@@ -44,6 +46,16 @@ public class App {
         masterFrame.setUndecorated(true);
         masterFrame.setType(Type.UTILITY);
         masterFrame.setVisible(true);
+
+        destinationRemoteDialogFrame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+
+        // Create and set up the content pane.
+        RemoteDialog newContentPane = new RemoteDialog(destinationRemoteDialogFrame);
+        newContentPane.setOpaque(true); // content panes must be opaque
+        destinationRemoteDialogFrame.setContentPane(newContentPane);
+
+        // Display the window.
+        destinationRemoteDialogFrame.pack();
 
         // Check the SystemTray support
         if (!SystemTray.isSupported()) {
@@ -78,6 +90,9 @@ public class App {
                 "Source directory: %s");
         selectFolderPopupDestination = new SelectFolderPopup(destinationDirectory, "No destination directory",
                 "Destination directory: %s");
+
+        destinationRemoteDialog = new RemoteDialog(masterFrame);
+
         mainPage = new MainPage();
 
         updateMenuButtons();
@@ -147,7 +162,6 @@ public class App {
 
         // double left click tray icon
         trayIcon.addActionListener(new ActionListener() {
-
             public void actionPerformed(ActionEvent e) {
                 mainPage.createAndShowGUI();
             }
@@ -196,7 +210,7 @@ public class App {
                     selectFolderPopupDestination.createAndShowGUI();
                     updateMenuButtons();
                 } else if ("Remote".equals(item.getLabel())) {
-
+                    destinationRemoteDialogFrame.setVisible(true);
                 }
             }
         };
@@ -211,6 +225,8 @@ public class App {
                 System.exit(0);
             }
         });
+
+        masterFrame.pack();
     }
 
     // Obtain the image URL
