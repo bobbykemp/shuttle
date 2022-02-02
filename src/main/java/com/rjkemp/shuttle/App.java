@@ -81,12 +81,35 @@ public class App {
         watchStatus.setEnabled(false);
         selectedTransferType.setEnabled(false);
 
-        ButtonGroup destinationButtonGroup = new ButtonGroup();
         Menu destinationTypeMenu = new Menu("Pick Destination");
-        JRadioButtonMenuItem destinationTypeLocal = new JRadioButtonMenuItem("Local");
-        destinationButtonGroup.add(destinationTypeLocal);
-        JRadioButtonMenuItem destinationTypeRemote = new JRadioButtonMenuItem("Remote");
-        destinationButtonGroup.add(destinationTypeRemote);
+        final CheckboxMenuItem destinationTypeLocal = new CheckboxMenuItem("Local");
+        final CheckboxMenuItem destinationTypeRemote = new CheckboxMenuItem("Remote");
+
+        // user selects local destination transfer
+        destinationTypeLocal.addItemListener(new ItemListener() {
+            public void itemStateChanged(ItemEvent e) {
+                // set the other button to false to be checkbox-like
+                destinationTypeRemote.setState(false);
+
+                selectFolderPopupDestination.createAndShowGUI();
+
+                if (selectFolderPopupDestination.getWatchedDirectory() != null) {
+                    destinationTypeLocal.setState(true);
+                }
+
+                updateMenuButtons();
+            }
+        });
+
+        // user selects remote destination transfer
+        destinationTypeRemote.addItemListener(new ItemListener() {
+            public void itemStateChanged(ItemEvent e) {
+                destinationTypeRemote.setState(true);
+                destinationTypeLocal.setState(false);
+
+                destinationRemoteDialogFrame.setVisible(true);
+            }
+        });
 
         transferSettingsPage = new TransferSettingsPage(selectedTransferType);
         selectFolderPopupSource = new SelectFolderPopup(currentDirectory, "No source directory",
@@ -203,23 +226,6 @@ public class App {
                 watcher.cancel(true);
             }
         });
-
-        ActionListener listener = new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                MenuItem item = (MenuItem) e.getSource();
-                // TrayIcon.MessageType type = null;
-                System.out.println(item.getLabel());
-                if ("Local".equals(item.getLabel())) {
-                    selectFolderPopupDestination.createAndShowGUI();
-                    updateMenuButtons();
-                } else if ("Remote".equals(item.getLabel())) {
-                    destinationRemoteDialogFrame.setVisible(true);
-                }
-            }
-        };
-
-        destinationTypeLocal.addActionListener(listener);
-        destinationTypeRemote.addActionListener(listener);
 
         // click exit button
         exitItem.addActionListener(new ActionListener() {
