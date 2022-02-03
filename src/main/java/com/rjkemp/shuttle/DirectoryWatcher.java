@@ -6,6 +6,9 @@ import static java.nio.file.StandardCopyOption.*;
 import static java.nio.file.LinkOption.*;
 import java.nio.file.attribute.*;
 import javax.swing.SwingWorker;
+
+import net.schmizz.sshj.SSHClient;
+
 import java.io.*;
 import java.awt.MenuItem;
 import java.util.*;
@@ -18,6 +21,8 @@ public class DirectoryWatcher extends SwingWorker<Void, Path> {
     private final boolean recursive;
     private boolean trace = false;
     private PathManager pathManager = new PathManager();
+    private SSHClient ssh;
+    private Transfer.Type transferType;
 
     private MenuItem statusLabel;
 
@@ -89,7 +94,7 @@ public class DirectoryWatcher extends SwingWorker<Void, Path> {
                     }
                 }
                 try {
-                    pathManager.processBatch(files, destDir);
+                    pathManager.processBatch(files, destDir, transferType);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
@@ -98,10 +103,39 @@ public class DirectoryWatcher extends SwingWorker<Void, Path> {
         });
     }
 
-    DirectoryWatcher(Path sourceDir, Path destDir, boolean recursive, MenuItem statusLabel) throws IOException {
+    DirectoryWatcher(Path sourceDir, Path destDir, boolean recursive, MenuItem statusLabel, Transfer.Type transferType)
+            throws IOException {
         setWatcherStatus(WatchStatus.INACTIVE);
 
         this.destDir = destDir;
+        this.transferType = transferType;
+        this.statusLabel = statusLabel;
+        this.watcher = FileSystems.getDefault().newWatchService();
+        this.keys = new HashMap<WatchKey, Path>();
+        this.recursive = recursive;
+
+        if (recursive) {
+            setWatcherStatus(WatchStatus.SCANNING);
+            System.out.format("Scanning %s ...\n", sourceDir);
+            registerAll(sourceDir);
+            System.out.println("Done.");
+        } else {
+            register(sourceDir);
+        }
+
+        setWatcherStatus(WatchStatus.READY);
+
+        // enable trace after initial registration
+        this.trace = true;
+    }
+
+    DirectoryWatcher(Path sourceDir, SSHClient ssh, boolean recursive, MenuItem statusLabel, Transfer.Type transferType)
+            throws IOException {
+        setWatcherStatus(WatchStatus.INACTIVE);
+
+        this.ssh = ssh;
+        this.destDir = null;
+        this.transferType = transferType;
         this.statusLabel = statusLabel;
         this.watcher = FileSystems.getDefault().newWatchService();
         this.keys = new HashMap<WatchKey, Path>();
@@ -222,7 +256,7 @@ public class DirectoryWatcher extends SwingWorker<Void, Path> {
     @Override
     protected void process(List<Path> paths) {
         try {
-            pathManager.processBatch(paths, destDir);
+            pathManager.processBatch(paths, destDir, transferType);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }

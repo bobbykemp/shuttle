@@ -5,6 +5,11 @@ import static java.nio.file.StandardCopyOption.*;
 import java.io.*;
 import java.util.*;
 
+import net.schmizz.sshj.SSHClient;
+import net.schmizz.sshj.sftp.SFTPClient;
+
+import com.rjkemp.shuttle.Transfer.Type;
+
 public class PathManager {
     // Display a message, preceded by
     // the name of the current thread
@@ -19,10 +24,34 @@ public class PathManager {
         private List<Path> pathsBatch = new ArrayList<Path>();
         private List<Path> successfullyMoved = new ArrayList<Path>();
         private Path destDir;
+        private Transfer.Type transferType;
+        private SSHClient ssh;
 
-        public TaskRunner(List<Path> pathsBatch, Path destDir) {
+        public TaskRunner(List<Path> pathsBatch, Path destDir, Transfer.Type transferType) {
+            this.transferType = transferType;
             this.pathsBatch = pathsBatch;
             this.destDir = destDir;
+        }
+
+        public TaskRunner(List<Path> pathsBatch, Path destDir, Transfer.Type transferType, SSHClient ssh) {
+            this.ssh = ssh;
+            this.transferType = transferType;
+            this.pathsBatch = pathsBatch;
+            this.destDir = destDir;
+        }
+
+        private void moveFile(Path fromPath, Path toPath) throws IOException {
+            System.out.format("Moving file: %s %n", fromPath);
+            Files.move(fromPath, toPath, REPLACE_EXISTING, ATOMIC_MOVE);
+        }
+
+        private void sftpFile(Path path, String toPath) throws IOException {
+            final SFTPClient sftp = ssh.newSFTPClient();
+            try {
+                sftp.put(path.toString(), toPath);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
 
         public void run() {
@@ -34,8 +63,11 @@ public class PathManager {
                 Path destPath = Paths.get(destDir.toString(), path.getFileName().toString());
                 try {
                     Thread.sleep(50);
-                    System.out.format("Moving file: %s %n", path);
-                    Files.move(path, destPath, REPLACE_EXISTING, ATOMIC_MOVE);
+                    if (transferType == Type.MOVE) {
+                        moveFile(path, destPath);
+                    } else if (transferType == Type.SFTP) {
+                        sftpFile(path, "/");
+                    }
                     successfullyMoved.add(path);
                 } catch (InterruptedException exception) {
                     threadMessage("Thread interrupted");
@@ -53,8 +85,19 @@ public class PathManager {
         }
     }
 
-    public void processBatch(List<Path> paths, Path destDir) throws InterruptedException {
-        Thread t = new Thread(new TaskRunner(paths, destDir));
+    public void processBatch(List<Path> paths, Path destDir, Transfer.Type transferType) throws InterruptedException {
+        Thread t = new Thread(new TaskRunner(paths, destDir, transferType));
+        t.start();
+        while (t.isAlive()) {
+            threadMessage("Currently moving...");
+            t.join(30_000);
+        }
+        threadMessage("Done.");
+    }
+
+    public void processBatch(List<Path> paths, Path destDir, Transfer.Type transferType, SSHClient ssh)
+            throws InterruptedException {
+        Thread t = new Thread(new TaskRunner(paths, destDir, transferType, ssh));
         t.start();
         while (t.isAlive()) {
             threadMessage("Currently moving...");

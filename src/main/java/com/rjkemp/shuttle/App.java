@@ -6,6 +6,9 @@ import java.awt.event.*;
 import java.awt.event.MouseEvent;
 import java.net.URL;
 import javax.swing.*;
+
+import net.schmizz.sshj.SSHClient;
+
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
 
@@ -20,6 +23,9 @@ public class App {
     static MainPage mainPage;
     static SelectFolderPopup selectFolderPopupSource, selectFolderPopupDestination;
     static RemoteDialog destinationRemoteDialog;
+    static private Transfer.Type type = null;
+
+    static final SSHClient ssh = new SSHClient();
 
     public static void updateMenuButtons() {
         // Start Monitoring button
@@ -50,7 +56,7 @@ public class App {
         destinationRemoteDialogFrame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
 
         // Create and set up the content pane.
-        RemoteDialog newContentPane = new RemoteDialog(destinationRemoteDialogFrame);
+        RemoteDialog newContentPane = new RemoteDialog(destinationRemoteDialogFrame, ssh);
         newContentPane.setOpaque(true); // content panes must be opaque
         destinationRemoteDialogFrame.setContentPane(newContentPane);
 
@@ -95,6 +101,7 @@ public class App {
 
                 if (selectFolderPopupDestination.getWatchedDirectory() != null) {
                     destinationTypeLocal.setState(true);
+                    type = Transfer.Type.MOVE;
                 }
 
                 updateMenuButtons();
@@ -107,6 +114,8 @@ public class App {
                 destinationTypeRemote.setState(true);
                 destinationTypeLocal.setState(false);
 
+                type = Transfer.Type.SFTP;
+
                 destinationRemoteDialogFrame.setVisible(true);
             }
         });
@@ -117,7 +126,7 @@ public class App {
         selectFolderPopupDestination = new SelectFolderPopup(destinationDirectory, "No destination directory",
                 "Destination directory: %s");
 
-        destinationRemoteDialog = new RemoteDialog(masterFrame);
+        destinationRemoteDialog = new RemoteDialog(masterFrame, ssh);
 
         mainPage = new MainPage();
 
@@ -204,10 +213,21 @@ public class App {
         // click start monitoring button
         startMonitoring.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
+                System.out.println(type);
+
                 try {
-                    (watcher = new DirectoryWatcher(selectFolderPopupSource.getWatchedDirectory().toPath(),
-                            selectFolderPopupDestination.getWatchedDirectory().toPath(), true,
-                            watchStatus)).execute();
+                    switch (type) {
+                        case MOVE:
+                            (watcher = new DirectoryWatcher(selectFolderPopupSource.getWatchedDirectory().toPath(),
+                                    selectFolderPopupDestination.getWatchedDirectory().toPath(), true,
+                                    watchStatus, type)).execute();
+                            break;
+                        case SFTP:
+                            (watcher = new DirectoryWatcher(selectFolderPopupSource.getWatchedDirectory().toPath(),
+                                    ssh, true,
+                                    watchStatus, type)).execute();
+                            break;
+                    }
                 } catch (AccessDeniedException error) {
                     // show an error dialog
                     ErrorModal.show(
@@ -267,8 +287,11 @@ public class App {
         UIManager.put("swing.boldMetal", Boolean.FALSE);
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         initLookAndFeel();
+        System.out.println(System.getProperty("java.class.path"));
+
+        ssh.loadKnownHosts();
 
         // Schedule a job for the event-dispatching thread:
         // adding TrayIcon.

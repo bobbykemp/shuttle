@@ -11,11 +11,15 @@ import javax.swing.BoxLayout;
 import javax.swing.Box;
 import javax.swing.BorderFactory;
 import javax.swing.border.Border;
+
+import net.schmizz.sshj.SSHClient;
+
 import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
 import javax.swing.JPanel;
 import javax.swing.*;
 import java.beans.*; //Property change stuff
+import java.io.IOException;
 import java.awt.*;
 import java.awt.event.*;
 
@@ -26,17 +30,20 @@ public class RemoteDialog extends JPanel {
     String simpleDialogDesc = "Some simple message dialogs";
     String iconDesc = "A JOptionPane has its choice of icons";
     String moreDialogDesc = "Some more dialogs";
-    JTextField hostname;
+    JTextField hostname, port, username;
     JPasswordField password;
+    SSHClient ssh;
+    JButton select;
 
     public String getHostname() {
         return hostname.getText();
     }
 
     /** Creates the GUI shown inside the frame's content pane. */
-    public RemoteDialog(JFrame frame) {
+    public RemoteDialog(JFrame frame, SSHClient ssh) {
         super(new BorderLayout());
         this.frame = frame;
+        this.ssh = ssh;
 
         // Create the components.
         JPanel frequentPanel = createSimpleDialogBox();
@@ -77,14 +84,42 @@ public class RemoteDialog extends JPanel {
     /** Creates the panel shown by the first tab. */
     private JPanel createSimpleDialogBox() {
         JLabel hostnameLabel = new JLabel("Hostname");
-        JButton select = new JButton("Test");
+        JLabel portLabel = new JLabel("Port Number");
+        JLabel usernameLabel = new JLabel("User name");
+        JLabel passwordLabel = new JLabel("Password");
+
+        select = new JButton("Test");
+
+        select.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                System.out.println("SFTP selected");
+                try {
+                    ssh.connect(hostname.getText());
+                } catch (IOException error) {
+                    error.printStackTrace();
+                }
+            }
+        });
+
         hostname = new JTextField(30);
+        port = new JTextField("22");
+        username = new JTextField(30);
+        password = new JPasswordField();
 
         JPanel box = new JPanel();
 
         box.setLayout(new BoxLayout(box, BoxLayout.PAGE_AXIS));
         box.add(hostnameLabel);
         box.add(hostname);
+
+        box.add(portLabel);
+        box.add(port);
+
+        box.add(usernameLabel);
+        box.add(username);
+
+        box.add(passwordLabel);
+        box.add(password);
 
         JPanel pane = new JPanel(new BorderLayout());
         pane.add(box, BorderLayout.PAGE_START);
@@ -97,13 +132,13 @@ public class RemoteDialog extends JPanel {
      * this method should be invoked from the
      * event-dispatching thread.
      */
-    public static void createAndShowGUI() {
+    public static void createAndShowGUI(SSHClient ssh) {
         // Create and set up the window.
         JFrame frame = new JFrame("DialogDemo");
         frame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
 
         // Create and set up the content pane.
-        RemoteDialog newContentPane = new RemoteDialog(frame);
+        RemoteDialog newContentPane = new RemoteDialog(frame, ssh);
         newContentPane.setOpaque(true); // content panes must be opaque
         frame.setContentPane(newContentPane);
 
